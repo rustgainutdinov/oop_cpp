@@ -1,8 +1,8 @@
 //
 //  main.cpp
-//  oop
+//  radix
 //
-//  Created by Рустам Гайнутдинов on 15.02.2021.
+//  Created by Рустам Гайнутдинов on 21.02.2021.
 //  Copyright © 2021 Рустам Гайнутдинов. All rights reserved.
 //
 
