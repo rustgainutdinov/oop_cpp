@@ -1,0 +1,1 @@
+encrypt ./default/in ./default/tmp 18

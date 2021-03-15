@@ -2,56 +2,100 @@
 #include <fstream>
 #include <optional>
 
-int main(int argc, char * argv[]) {
-    if (argc != 5) {
-        std::cout << "Invalid arguments, use: replace <input file> <output file> <search string> <replace string>\n";
-        return 1;
+using namespace std;
+
+void AssertValidArguments(int argc)
+{
+    if (argc != 5)
+    {
+        throw invalid_argument(
+                "Invalid arguments, use: Replace <input file> <output file> <search string> <Replace string>");
     }
-    char * inputFileName = argv[1];
-    std::ifstream input(inputFileName);
-    if (!input.is_open()) {
-        std::cout << "Failed to open input file " << inputFileName << "\n";
-        return 1;
+}
+
+
+template<typename T>
+T OpenFile(const string &fileName)
+{
+    T file(fileName, ios_base::binary);
+    if (!file.is_open())
+    {
+        throw invalid_argument("Failed to open file \"" + fileName + "\"");
     }
-    char * outputFileName = argv[2];
-    std::ofstream output(outputFileName);
-    if (!input.is_open()) { 
-        std::cout << "Failed to open output file " << outputFileName << "\n";
-        return 1;
+    return file;
+}
+
+ifstream GetInput(char **argv)
+{
+    return OpenFile<ifstream>(argv[1]);
+}
+
+ofstream GetOutput(char **argv)
+{
+    return OpenFile<ofstream>(argv[2]);
+}
+
+void PutChToFile(char ch, ofstream &file)
+{
+    if (!file.put(ch))
+    {
+        throw invalid_argument("Failed to save data to file");
     }
-    std::string searchStr = argv[3];
-    std::string replaceStr = argv[4];
-    std::string resultingSearchStr = "";
+}
+
+void Replace(ifstream &input, ofstream &output, const string &searchStr, const string &replaceStr)
+{
+    string resultingSearchStr;
     int expectedSearchChPos = 0;
-    char expectedSearchCh = '\0';
     char ch;
-    while (input.get(ch)) {
-        if (searchStr.length() != 0) {
-            expectedSearchCh = searchStr[expectedSearchChPos];
+    while (input.get(ch))
+    {
+        if (searchStr.empty())
+        {
+            PutChToFile(ch, output);
+            continue;
         }
-        if (searchStr.length() != 0 && ch == expectedSearchCh) {
+        bool isChEqualExpectedCh = (ch == searchStr[expectedSearchChPos]);
+        if (isChEqualExpectedCh)
+        {
             resultingSearchStr += ch;
-            if (resultingSearchStr == searchStr) {
-                output << replaceStr;
-                resultingSearchStr = "";
-                expectedSearchChPos = 0;
-            } else {
-                expectedSearchChPos++;
-            }
-        } else {
-            if (resultingSearchStr.length() != 0) {
-                output << resultingSearchStr;
-                resultingSearchStr = "";
-                expectedSearchChPos = 0;
-            }
-            if (!output.put(ch)) {
-                std::cout << "Failed to save data to file " << outputFileName << "\n";
-                return 1;
-            }
+            expectedSearchChPos++;
+        }
+        else
+        {
+            output << resultingSearchStr;
+            PutChToFile(ch, output);
+        }
+        if (resultingSearchStr == searchStr)
+        {
+            output << replaceStr;
+        }
+        if ((resultingSearchStr == searchStr) || (!isChEqualExpectedCh))
+        {
+            resultingSearchStr.clear();
+            expectedSearchChPos = 0;
         }
     }
-    if (!output.flush()) {
-        std::cout << "Failed to save data to file " << outputFileName << "\n";
+    if (!output.flush())
+    {
+        throw invalid_argument("Failed to save data to file");
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    try
+    {
+        AssertValidArguments(argc);
+        string searchStr = argv[3];
+        string replaceStr = argv[4];
+        ifstream input = GetInput(argv);
+        ofstream output = GetOutput(argv);
+        Replace(input, output, searchStr, replaceStr);
+    }
+    catch (exception &e)
+    {
+        cout << e.what() << "\n";
         return 1;
     }
     return 0;

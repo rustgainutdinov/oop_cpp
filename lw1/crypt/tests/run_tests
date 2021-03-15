@@ -1,0 +1,11 @@
+if [ -f "./app" ]; then 
+    rm ./app
+fi
+
+ln ../../../cmake-build-debug/crypt ./app
+
+for dir in `find ./* -type d`
+do
+    ./app $(cat $dir/args1)
+    ./app $(cat $dir/args2)
+done

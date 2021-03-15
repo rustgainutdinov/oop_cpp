@@ -1,81 +1,114 @@
 #include <iostream>
 #include <map>
-#include <string>
-#include <stdlib.h>
+#include <cstdlib>
+
+using namespace std;
 
 const int MAX_NOTATION = 36;
 
-std::map<char, int> hexToInt =  {
-    {'0', 0},
-    {'1', 1},
-    {'2', 2},
-    {'3', 3},
-    {'4', 4},
-    {'5', 5},
-    {'6', 6},
-    {'7', 7},
-    {'8', 8},
-    {'9', 9},
-    {'A', 10},
-    {'B', 11},
-    {'C', 12},
-    {'D', 13},
-    {'E', 14},
-    {'F', 15},
-    {'G', 16},
-    {'H', 17},
-    {'I', 18},
-    {'J', 19},
-    {'K', 20},
-    {'L', 21},
-    {'M', 22},
-    {'N', 23},
-    {'O', 24},
-    {'P', 25},
-    {'Q', 26},
-    {'R', 27},
-    {'S', 28},
-    {'T', 29},
-    {'U', 30},
-    {'V', 31},
-    {'W', 32},
-    {'X', 33},
-    {'Y', 34},
-    {'Z', 35},
+class converting_exception : public exception
+{
+    const char *what() const noexcept override
+    {
+        return "Converting string to int error";
+    }
 };
 
-int exponentiate(int value, int radix, int numberOrder, bool & wasError) {
-    for (int j = 0; j < numberOrder; j++) {
-        if (((INT_MAX / radix) - value) < 0) {
-            wasError = true;
-            return 0;
+map<char, int> hexToInt = {
+        {'0', 0},
+        {'1', 1},
+        {'2', 2},
+        {'3', 3},
+        {'4', 4},
+        {'5', 5},
+        {'6', 6},
+        {'7', 7},
+        {'8', 8},
+        {'9', 9},
+        {'A', 10},
+        {'B', 11},
+        {'C', 12},
+        {'D', 13},
+        {'E', 14},
+        {'F', 15},
+        {'G', 16},
+        {'H', 17},
+        {'I', 18},
+        {'J', 19},
+        {'K', 20},
+        {'L', 21},
+        {'M', 22},
+        {'N', 23},
+        {'O', 24},
+        {'P', 25},
+        {'Q', 26},
+        {'R', 27},
+        {'S', 28},
+        {'T', 29},
+        {'U', 30},
+        {'V', 31},
+        {'W', 32},
+        {'X', 33},
+        {'Y', 34},
+        {'Z', 35},
+};
+
+void AssertValidArguments(int argc)
+{
+    if (argc != 4)
+    {
+        throw invalid_argument("Invalid arguments, use: radix <source notation> <destination notation> <value>");
+    }
+}
+
+int GetIntNotation(const char *notationStr)
+{
+    char *p;
+    int notation = (int) strtol(notationStr, &p, 10);
+    if (notation < 2 || notation > MAX_NOTATION)
+    {
+        throw invalid_argument("Notation is out of range 2..36");
+    }
+    return notation;
+}
+
+int Exponentiate(int value, int radix, int numberOrder)
+{
+    for (int j = 0; j < numberOrder; j++)
+    {
+        if (((INT_MAX / radix) - value) < 0)
+        {
+            throw converting_exception();
         }
         value *= radix;
     }
     return value;
 }
 
-int StringToInt(const std::string& str, int radix, bool & wasError) {
+int StringToInt(const string &str, int radix, bool isNegative)
+{
     int numberOrder = (int) (str.length() - 1);
     int resultValue = 0;
-    for (int i = 0; i < str.length(); i++) {
-        char ch = toupper(str[i]);
-        if (hexToInt.find(ch) == hexToInt.end()) {
-            wasError = true;
-            return 0;
+    const int maxVal = isNegative ? INT_MIN : INT_MAX;
+    for (char ch: str)
+    {
+        ch = toupper(ch);
+        if (hexToInt.find(ch) == hexToInt.end())
+        {
+            throw converting_exception();
         }
-        int orderNumber = hexToInt[ch];
-        if (orderNumber >= radix) {
-            wasError = true;
-            return 0;
+        int orderValue = hexToInt[ch];
+        if (orderValue >= radix)
+        {
+            throw converting_exception();
         }
-        int orderResultValue = exponentiate(orderNumber, radix, numberOrder, wasError);
-        if (wasError) {
-            return 0;
-        }
-        if ((orderResultValue - INT_MAX + resultValue) > 0) {
-            wasError = true;
-            return 0;
+        orderValue = isNegative ? -orderValue : orderValue;
+        int orderResultValue = Exponentiate(orderValue, radix, numberOrder);
+        // != is XOR
+        if ((orderResultValue - maxVal + resultValue) != 0 &&
+            ((orderResultValue - maxVal + resultValue) > 0) != isNegative)
+        {
+            throw converting_exception();
         }
         resultValue += orderResultValue;
         numberOrder--;
@@ -83,58 +116,49 @@ int StringToInt(const std::string& str, int radix, bool & wasError) {
     return resultValue;
 }
 
-void reverseStr(std::string& str)
+string IntToStr(int n, int radix, bool isNegative)
 {
-    int n = (int) str.length();
-    for (int i = 0; i < n / 2; i++) {
-        std::swap(str[i], str[n - i - 1]);
+    string resultValue;
+    map<int, char> intToHex;
+    for (auto &i : hexToInt)
+    {
+        intToHex[i.second] = i.first;
     }
-}
-
-std::string IntToStr(int n, int radix) {
-    std::map<int, char> intToHex;
-    for (std::map<char, int>::iterator i = hexToInt.begin(); i != hexToInt.end(); ++i)
-        intToHex[i->second] = i->first;
-    std::string str = "";
-    do {
-        str += intToHex[n % radix];
+    do
+    {
+        resultValue += intToHex[abs(n % radix)];
     } while (n /= radix);
-    reverseStr(str);
-    return str;
+    resultValue += isNegative ? "-" : "";
+    reverse(resultValue.begin(), resultValue.end());
+    return resultValue;
 }
 
-
-int main(int argc, const char * argv[]) {
-    if (argc != 4) {
-        std::cout << "Invalid arguments, use: radix <source notation> <destination notation> <value>\n";
-        return 1;
-    }
-    char * p;
-    int srcNotation = (int) strtol(argv[1], &p, 10);
-    if (srcNotation < 2 || srcNotation > MAX_NOTATION) {
-        std::cout << "Source notation is out of range 2..36\n";
-        return 1;
-    }
-    int dstNotation = (int) strtol(argv[2], &p, 10);
-    if (dstNotation < 2 || dstNotation > MAX_NOTATION) {
-        std::cout << "Destination notation is out of range 2..36\n";
-        return 1;
-    }
-    std::string initValue = argv[3];
+string Translate(string value, int srcNotation, int dstNotation)
+{
     bool isNegative = false;
-    if (initValue[0] == '-') {
-        initValue.erase(0, 1);
+    if (value[0] == '-')
+    {
+        value.erase(0, 1);
         isNegative = true;
     }
-    bool wasError = false;
-    int decimalSystemValue = StringToInt(initValue, srcNotation, wasError);
-    if (wasError) {
-        std::cout << "Converting string to int error\n";
+    int decimalValue = StringToInt(value, srcNotation, isNegative);
+    return IntToStr(decimalValue, dstNotation, isNegative);
+}
+
+int main(int argc, const char *argv[])
+{
+    try
+    {
+        AssertValidArguments(argc);
+        int srcNotation = GetIntNotation(argv[1]);
+        int dstNotation = GetIntNotation(argv[2]);
+        string value = argv[3];
+        cout << Translate(value, srcNotation, dstNotation) << "\n";
+    }
+    catch (exception &e)
+    {
+        cout << e.what() << "\n";
         return 1;
     }
-    if (isNegative) {
-        std::cout << '-';
-    }
-    std::cout << IntToStr(decimalSystemValue, dstNotation) << "\n";
     return 0;
 }
