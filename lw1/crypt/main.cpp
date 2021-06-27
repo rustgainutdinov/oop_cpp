@@ -85,11 +85,12 @@ vector<int> GetBufBits(int buf)
 
 int ProcessBuf(int buf, CryptMode cryptMode, int cryptKey)
 {
+    //TODO: use unsigned char, put func as args, don't use vector
     int processedBuf;
     if (cryptMode == ENCRYPT)
     {
         vector<int> bits = GetBufBits(buf);
-        processedBuf = bits[0] << 2;
+        processedBuf = bits[0] << 2; //0b0011010
         processedBuf += bits[1] << 2;
         processedBuf += bits[2] << 2;
         processedBuf += bits[3] << 3;
@@ -115,6 +116,7 @@ int ProcessBuf(int buf, CryptMode cryptMode, int cryptKey)
     return processedBuf;
 }
 
+//rename to transformStream
 void Crypt(ifstream &input, ofstream &output, CryptMode cryptMode, int cryptKey)
 {
     char buf;

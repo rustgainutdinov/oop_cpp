@@ -155,7 +155,7 @@ int main(int argc, const char *argv[])
         string value = argv[3];
         cout << Translate(value, srcNotation, dstNotation) << "\n";
     }
-    catch (exception &e)
+    catch (const exception &e)
     {
         cout << e.what() << "\n";
         return 1;

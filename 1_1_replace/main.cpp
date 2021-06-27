@@ -43,6 +43,7 @@ void PutChToFile(char ch, ofstream &file)
     }
 }
 
+//TODO: use size_t instead int
 void Replace(ifstream &input, ofstream &output, const string &searchStr, const string &replaceStr)
 {
     string resultingSearchStr;
@@ -93,7 +94,7 @@ int main(int argc, char *argv[])
         ofstream output = GetOutput(argv);
         Replace(input, output, searchStr, replaceStr);
     }
-    catch (exception &e)
+    catch (const exception &e)
     {
         cout << e.what() << "\n";
         return 1;

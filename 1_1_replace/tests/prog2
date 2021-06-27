@@ -1,0 +1,67 @@
+import numpy as np
+import math
+
+def calc_velocity_dynamics(calc_pars, model_pars, regul_pars):
+    v_trace = [ np.array([calc_pars['t0'], calc_pars['v0']]) ];
+    vSteps = [];
+    vSteps.append(calc_pars['v0']);
+    errors = [];
+    errorsSum = [];
+    sum = 0;
+    nLagSteps = 0;
+    #Пропорциональная состовляющая управления
+    uP = 0;
+    #Интегральная состовляющая управления
+    uL = 0;
+    #Суммарное управляющее воздействие
+    u = 0;
+    tSteps = [];
+    tSteps.append(calc_pars['t0']);
+    nsteps = calc_pars['tmax']/calc_pars['dt'];
+    nsteps = math.floor(nsteps);
+
+    #Заполняем массив с временем на каждом шаге
+    for time in range(nsteps):
+      if time <= calc_pars['tmax']:
+        value = tSteps[time] + calc_pars['dt'];
+      tSteps.append(value + 0.00);
+
+    for step in range(nsteps):
+      sum = 0;
+      dV = 0;
+      error = regul_pars['Vdir'] - vSteps[step];
+      errors.append(error);
+
+      #Вычисляем количество иттераций для подсчета еррор суммы
+      if regul_pars['lag'] < step:
+        nLagSteps = step - regul_pars['lag'];
+      else:
+        nLagSteps = 0;
+
+      sum += error;
+      for n in range(nLagSteps, step):
+        sum += errors[n];
+
+      uP=regul_pars['kP']*error;
+      uL=regul_pars['kI']*sum;
+
+      u = uP + uL;
+      u = min(model_pars['Umax'], max(-model_pars['Umax'], u));
+      dV = (u - model_pars['kc']*vSteps[step])*(calc_pars['dt']/model_pars['m']);
+      vSteps.append(vSteps[step] + dV);
+
+      v_trace.append(tSteps);
+      v_trace.append(vSteps);
+
+    return np.array(v_trace).T
+
+
+def analys_tdone(v_trace, cruize_vel, v_precision):
+  t_done = 0;
+  v_trace_speeds = v_trace[2];
+  for i in range(len(v_trace_speeds)):
+    i = i + 1;
+    if len(v_trace_speeds) >= i:
+      if (v_trace_speeds[len(v_trace_speeds) - i] > cruize_vel + v_precision) or (v_trace_speeds[len(v_trace_speeds) - i] < cruize_vel - v_precision):
+        return v_trace[1][len(v_trace_speeds) - i] + 1.00;
+  return t_done

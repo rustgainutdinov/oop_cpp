@@ -15,14 +15,14 @@ void AssertValidArguments(int argc)
     }
 }
 
-vector<vector<int>> GetMatrixFromFile(const string &mFileName)
+vector<vector<double>> GetMatrixFromFile(const string &mFileName)
 {
     fstream in(mFileName);
     if (!in.is_open())
     {
         throw invalid_argument("Failed to open input file");
     }
-    vector<vector<int>> matrix(ROWS_COUNT, vector<int>(COLUMNS_COUNT));
+    vector<vector<double>> matrix(ROWS_COUNT, vector<double>(COLUMNS_COUNT));
     for (int i = 0; i < ROWS_COUNT; i++)
         for (int j = 0; j < COLUMNS_COUNT; j++)
             in >> matrix[i][j];
@@ -41,7 +41,7 @@ void PrintMatrix(const vector<vector<T>> &matrix)
 }
 
 
-int GetDet(const vector<vector<int>> &m)
+int GetDet(const vector<vector<double>> &m)
 {
     return m[0][0] * m[1][1] * m[2][2] +
            m[1][0] * m[0][2] * m[2][1] +
@@ -51,18 +51,18 @@ int GetDet(const vector<vector<int>> &m)
            m[2][2] * m[0][1] * m[1][0];
 }
 
-vector<vector<int>> GetTransportedMatrix(const vector<vector<int>> &matrix)
+vector<vector<double>> GetTransportedMatrix(const vector<vector<double>> &matrix)
 {
-    vector<vector<int>> transportedMatrix(ROWS_COUNT, vector<int>(COLUMNS_COUNT));
+    vector<vector<double>> transportedMatrix(ROWS_COUNT, vector<double>(COLUMNS_COUNT));
     for (int i = 0; i < ROWS_COUNT; i++)
         for (int j = 0; j < COLUMNS_COUNT; j++)
             transportedMatrix[j][i] = matrix[i][j];
     return transportedMatrix;
 }
 
-vector<vector<int>> GetAlgebraicAdditionMatrix(const vector<vector<int>> &matrix, int excludeRow, int excludeCol)
+vector<vector<double>> GetAlgebraicAdditionMatrix(const vector<vector<double>> &matrix, int excludeRow, int excludeCol)
 {
-    vector<vector<int>> algebraicAdditionMatrix(2, vector<int>(2));
+    vector<vector<double>> algebraicAdditionMatrix(2, vector<double>(2));
     int algebraicAdditionI = 0;
     for (int i = 0; i < ROWS_COUNT; i++)
     {
@@ -79,7 +79,7 @@ vector<vector<int>> GetAlgebraicAdditionMatrix(const vector<vector<int>> &matrix
     return algebraicAdditionMatrix;
 }
 
-vector<vector<double>> FindInverseMatrix(const vector<vector<int>> &matrix)
+vector<vector<double>> FindInverseMatrix(const vector<vector<double>> &matrix)
 {
     int det = GetDet(matrix);
     if (det == 0)
@@ -87,12 +87,12 @@ vector<vector<double>> FindInverseMatrix(const vector<vector<int>> &matrix)
         throw invalid_argument("Finding inverse matrix is impossible");
     }
     vector<vector<double>> invertedMatrix(ROWS_COUNT, vector<double>(COLUMNS_COUNT));
-    vector<vector<int>> transportedMatrix = GetTransportedMatrix(matrix);
+    vector<vector<double>> transportedMatrix = GetTransportedMatrix(matrix);
     for (int i = 0; i < ROWS_COUNT; i++)
     {
         for (int j = 0; j < COLUMNS_COUNT; j++)
         {
-            vector<vector<int>> algebraicAdditionMatrix = GetAlgebraicAdditionMatrix(transportedMatrix, i, j);
+            vector<vector<double>> algebraicAdditionMatrix = GetAlgebraicAdditionMatrix(transportedMatrix, i, j);
             invertedMatrix[i][j] = (((i + j) % 2) == 0 ? 1 : -1) * (
                     algebraicAdditionMatrix[0][0] * algebraicAdditionMatrix[1][1] -
                     algebraicAdditionMatrix[0][1] * algebraicAdditionMatrix[1][0]
@@ -108,11 +108,11 @@ int main(int argc, const char *argv[])
     {
         AssertValidArguments(argc);
         string mFileName = argv[1];
-        vector<vector<int>> matrix = GetMatrixFromFile(mFileName);
+        vector<vector<double>> matrix = GetMatrixFromFile(mFileName);
         vector<vector<double>> invertedMatrix = FindInverseMatrix(matrix);
         PrintMatrix(invertedMatrix);
     }
-    catch (exception &e)
+    catch (const exception &e)
     {
         cout << e.what() << "\n";
         return 1;
